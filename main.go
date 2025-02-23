@@ -1,18 +1,30 @@
 package main
 
 import (
-	"fmt"
+	"context"
+	"net"
 	"net/http"
-	"os"
 	"rtdocs/server"
 )
 
+func SaveConnInContext(ctx context.Context, c net.Conn) context.Context {
+
+	return context.WithValue(ctx, server.ConnContextKey, c)
+}
+
 func main() {
 
-	http.HandleFunc("/", server.HandleHomePage)
-	err := http.ListenAndServe(":80", nil)
-	if err != nil {
-		fmt.Println(err)
-		os.Exit(1)
+	server.Init()
+
+	server.R.HandleFunc("/", server.HandleHomePage)
+	server.R.HandleFunc("/websocket", server.HandleWebsocketConn)
+	server.R.HandleFunc("/test", server.HandleTest)
+
+	s := http.Server{
+		Addr:        ":80",
+		ConnContext: SaveConnInContext,
+		Handler:     server.R,
 	}
+
+	panic(s.ListenAndServe())
 }

@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+<body>
+    <h1>Hello from go webskets</h1>
+    <button onclick="test()">test</button>
+<script>
+    console.log('hei')
+    const socket = new WebSocket(
+        "ws://localhost/websocket")
+
+    socket.onopen = function() {
+        console.log("Connected to WebSocket server.");
+        socket.send("Hello, Server!"); // Send message to server after connection is established
+    };
+
+    socket.onmessage = function(event) {
+        console.log(event)
+        console.log("Received message from server: " + event.data);
+    };
+
+    socket.onerror = function(error) {
+        console.error("WebSocket Error: ", error);
+    };
+
+    function test() {
+
+        // console.log(socket.readyState)
+        // console.log(socket.readyState == socket.OPEN)
+        if (socket.readyState == socket.OPEN) {
+            socket.send("habibi\n")
+            console.log("sent?")
+        }
+        
+    }
+</script>
+</body>
+</html>

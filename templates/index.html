@@ -15,7 +15,6 @@
 
     socket.onopen = function() {
         console.log("Connected to WebSocket server.");
-        socket.send("Hello, Server!"); // Send message to server after connection is established
     };
 
     socket.onmessage = function(event) {
@@ -32,7 +31,7 @@
         // console.log(socket.readyState)
         // console.log(socket.readyState == socket.OPEN)
         if (socket.readyState == socket.OPEN) {
-            socket.send("habibi\n")
+            socket.send("hello")
             console.log("sent?")
         }
         

@@ -79,9 +79,7 @@ func handleConn(conn net.Conn) {
 	// Read recvData from the connection
 	reader := bufio.NewReader(conn)
 	for {
-		fmt.Println("worked till here")
 		header, err := reader.ReadByte()
-		fmt.Println(header)
 		if err != nil {
 			if err.Error() == "EOF" {
 				break
@@ -90,6 +88,39 @@ func handleConn(conn net.Conn) {
 				break
 			}
 		}
+		fin := header & 1
+		opcode := header & 0b00001111
+		// fmt.Println(fin)
+		fmt.Println(fin)
+		fmt.Println(opcode)
+
+		next, err := reader.ReadByte()
+		if err != nil {
+			fmt.Println(err)
+			break
+		}
+		mask := next & 1
+		length := next & 0b01111111
+		fmt.Println(mask, length)
+
+		maskData := make([]byte, 4)
+		_, err1 := reader.Read(maskData)
+		if err1 != nil {
+			fmt.Println(err)
+		}
+
+		fmt.Printf("%08b", maskData)
+
+		payloadData := make([]byte, length)
+		_, err2 := reader.Read(payloadData)
+		if err2 != nil {
+			fmt.Println(err2)
+		}
+		decodedData := make([]byte, length)
+		for i, d := range payloadData {
+			decodedData[i] = d ^ maskData[i%4]
+		}
+		fmt.Println(string(decodedData))
 		// fmt.Println(header)
 	}
 }

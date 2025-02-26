@@ -12,8 +12,6 @@ import (
 	"net/http"
 )
 
-var clients []*WebsocketConn
-
 const (
 	MagicVal            = "258EAFA5-E914-47DA-95CA-C5AB0DC85B11"
 	SecWebSocketKey     = "Sec-WebSocket-Key"
@@ -123,10 +121,11 @@ func (df DataFrame) UnmaskData() []byte {
 }
 
 type WebsocketConn struct {
-	tcpConn net.Conn
+	tcpConn     net.Conn
+	broadcaster *Broadcaster
 }
 
-func UpgradeConn(w http.ResponseWriter, r *http.Request) (*WebsocketConn, error) {
+func UpgradeConn(b *Broadcaster, w http.ResponseWriter, r *http.Request) (*WebsocketConn, error) {
 
 	headers, err := getClientHeaders(r)
 	if err != nil {
@@ -152,18 +151,29 @@ func UpgradeConn(w http.ResponseWriter, r *http.Request) (*WebsocketConn, error)
 		return nil, err
 	}
 
-	wConn := &WebsocketConn{tcpConn: conn}
-	clients = append(clients, wConn)
+	wConn := &WebsocketConn{tcpConn: conn, broadcaster: b}
+	b.Add <- wConn
 
 	return wConn, nil
 }
 
 func (wConn *WebsocketConn) ReadMsg() {
-	defer wConn.tcpConn.Close()
+	defer func() {
+		err := wConn.tcpConn.Close()
+		if err != nil {
+			fmt.Println(err)
+		} else {
+			wConn.broadcaster.Remove <- wConn
+			fmt.Print("closing connection: ")
+		}
+	}()
 	reader := bufio.NewReader(wConn.tcpConn)
 
 	for {
 		dataFrame, err := NewDataFrame(reader)
+		if dataFrame.Opcode == 0x8 {
+			return
+		}
 		if dataFrame.Opcode != 1 {
 			continue
 		}
@@ -171,20 +181,8 @@ func (wConn *WebsocketConn) ReadMsg() {
 			fmt.Println(err)
 			break
 		}
-		// fmt.Println(dataFrame.String())
-		// _ = dataFrame.UnmaskData()
-		// fmt.Println(dataFrame.String())
 		decodedData := dataFrame.UnmaskData()
-		fmt.Println(string(decodedData))
-		// fmt.Println(len(string(decodedData)))
-
-		broadcast(string(decodedData))
-	}
-}
-
-func broadcast(message string) {
-	for _, c := range clients {
-		c.sendMsg(message)
+		wConn.broadcaster.Broadcast <- decodedData
 	}
 }
 

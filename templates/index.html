@@ -1,55 +1,75 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- Include stylesheet -->
+    <link href="https://cdn.jsdelivr.net/npm/quill@2.0.3/dist/quill.snow.css" rel="stylesheet" />
+
     <title>Document</title>
 </head>
+
 <body>
-    <h1>Hello from go webskets</h1>
-    <input name="msg" id="msg" />
-    <button onclick="sendMsg()">send</button>
-    <button onclick="connect()">connect</button>
-    <div class="res">
+    <h1 style="text-align: center;">Silly Real Time Docs</h1>
 
-    </div>
-<script>
-    console.log('hei')
-    let socket = null
+    <button onclick="connect()">Connect</button>
+    <button onclick="disconnect()">Disconnect</button>
+    
+    <input onchange="sendMsg()" id="editor"></input>
 
-    function connect() {
-        socket = new WebSocket(
-            "ws://localhost/websocket")
+    <script src="https://cdn.jsdelivr.net/npm/quill@2.0.3/dist/quill.js"></script>
+    <script>
+        const quill = new Quill('#editor', {
+            theme: 'snow',
+        });
+    </script>
+    <script>
+        let socket = null
 
-        socket.onopen = function() {
-            console.log("Connected to WebSocket server.");
-        };
+        function connect() {
+            socket = new WebSocket(
+                "ws://localhost/websocket")
 
-        socket.onmessage = function(event) {
-            console.log(event)
-            const p = document.createElement("p")
-            p.textContent = event.data
-            document.getElementsByClassName("res").item(0).appendChild(p)
-        };
+            socket.onopen = function () {
+                console.log("Connected to WebSocket server.");
+            };
 
-        socket.onerror = function(error) {
-            console.error("WebSocket Error: ", error);
-        };
-    }
+            socket.onmessage = function (event) {
+                console.log(event.data)
+                document.getElementById("editor").value = event.data
+            };
 
-    function sendMsg() {
-
-        if (!socket) {
-            return
+            socket.onerror = function (error) {
+                console.error("WebSocket Error: ", error);
+            };
         }
 
-        if (socket.readyState == socket.OPEN) {
-            let msgVal = document.getElementById('msg').value
-            socket.send(msgVal)
-            document.getElementById('msg').value = ''
+        function sendMsg() {
+
+            if (!socket) {
+                return
+            }
+
+            if (socket.readyState == socket.OPEN) {
+                let msgVal = document.getElementById('editor').value
+                socket.send(msgVal)
+            }
         }
-        
-    }
-</script>
+        function disconnect() {
+            if (!socket) {
+                return
+            }
+
+            if (socket.bufferedAmount != 0) {
+                console.log('theres pending data to be sent')
+                return
+            }
+
+            socket.close()
+
+        }
+    </script>
 </body>
+
 </html>

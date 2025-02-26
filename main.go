@@ -15,10 +15,13 @@ func SaveConnInContext(ctx context.Context, c net.Conn) context.Context {
 func main() {
 
 	server.Init()
+	broadcast := server.NewBroadcaster()
+	go broadcast.Run()
 
 	server.R.HandleFunc("/", server.HandleHomePage)
-	server.R.HandleFunc("/websocket", server.HandleWebsocketConn)
-	server.R.HandleFunc("/test", server.HandleTest)
+	server.R.HandleFunc("/websocket", func(w http.ResponseWriter, r *http.Request) {
+		server.HandleWebsocketConn(broadcast, w, r)
+	})
 
 	s := http.Server{
 		Addr:        ":80",
@@ -27,4 +30,5 @@ func main() {
 	}
 
 	panic(s.ListenAndServe())
+
 }

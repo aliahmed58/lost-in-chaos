@@ -10,6 +10,9 @@
     <input name="msg" id="msg" />
     <button onclick="sendMsg()">send</button>
     <button onclick="connect()">connect</button>
+    <div class="res">
+
+    </div>
 <script>
     console.log('hei')
     let socket = null
@@ -24,7 +27,9 @@
 
         socket.onmessage = function(event) {
             console.log(event)
-            console.log("Received message from server: " + event.data);
+            const p = document.createElement("p")
+            p.textContent = event.data
+            document.getElementsByClassName("res").item(0).appendChild(p)
         };
 
         socket.onerror = function(error) {

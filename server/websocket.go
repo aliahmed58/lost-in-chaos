@@ -12,6 +12,8 @@ import (
 	"net/http"
 )
 
+var clients []*WebsocketConn
+
 const (
 	MagicVal            = "258EAFA5-E914-47DA-95CA-C5AB0DC85B11"
 	SecWebSocketKey     = "Sec-WebSocket-Key"
@@ -150,7 +152,10 @@ func UpgradeConn(w http.ResponseWriter, r *http.Request) (*WebsocketConn, error)
 		return nil, err
 	}
 
-	return &WebsocketConn{tcpConn: conn}, nil
+	wConn := &WebsocketConn{tcpConn: conn}
+	clients = append(clients, wConn)
+
+	return wConn, nil
 }
 
 func (wConn *WebsocketConn) ReadMsg() {
@@ -167,12 +172,40 @@ func (wConn *WebsocketConn) ReadMsg() {
 			break
 		}
 		// fmt.Println(dataFrame.String())
-
 		// _ = dataFrame.UnmaskData()
 		// fmt.Println(dataFrame.String())
 		decodedData := dataFrame.UnmaskData()
 		fmt.Println(string(decodedData))
 		// fmt.Println(len(string(decodedData)))
+
+		broadcast(string(decodedData))
+	}
+}
+
+func broadcast(message string) {
+	for _, c := range clients {
+		c.sendMsg(message)
+	}
+}
+
+func (wConn *WebsocketConn) sendMsg(message string) {
+	header := []byte{0x81}
+	payload := []byte(message)
+	length := len(payload)
+
+	if length <= 125 {
+		header = append(header, byte(length))
+	} else if length <= 65535 {
+		header = append(header, 126, byte(length>>8))
+	} else {
+		// TODO: what to do if 64 bit length?
+		header = append(header, 127)
+	}
+
+	frame := append(header, payload...)
+	_, err := wConn.tcpConn.Write(frame)
+	if err != nil {
+		fmt.Println(err)
 	}
 }
 

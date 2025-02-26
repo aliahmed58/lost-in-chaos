@@ -7,32 +7,41 @@
 </head>
 <body>
     <h1>Hello from go webskets</h1>
-    <button onclick="test()">test</button>
+    <input name="msg" id="msg" />
+    <button onclick="sendMsg()">send</button>
+    <button onclick="connect()">connect</button>
 <script>
     console.log('hei')
-    const socket = new WebSocket(
-        "ws://localhost/websocket")
+    let socket = null
 
-    socket.onopen = function() {
-        console.log("Connected to WebSocket server.");
-    };
+    function connect() {
+        socket = new WebSocket(
+            "ws://localhost/websocket")
 
-    socket.onmessage = function(event) {
-        console.log(event)
-        console.log("Received message from server: " + event.data);
-    };
+        socket.onopen = function() {
+            console.log("Connected to WebSocket server.");
+        };
 
-    socket.onerror = function(error) {
-        console.error("WebSocket Error: ", error);
-    };
+        socket.onmessage = function(event) {
+            console.log(event)
+            console.log("Received message from server: " + event.data);
+        };
 
-    function test() {
+        socket.onerror = function(error) {
+            console.error("WebSocket Error: ", error);
+        };
+    }
 
-        // console.log(socket.readyState)
-        // console.log(socket.readyState == socket.OPEN)
+    function sendMsg() {
+
+        if (!socket) {
+            return
+        }
+
         if (socket.readyState == socket.OPEN) {
-            socket.send("hello")
-            console.log("sent?")
+            let msgVal = document.getElementById('msg').value
+            socket.send(msgVal)
+            document.getElementById('msg').value = ''
         }
         
     }

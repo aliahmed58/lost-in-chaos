@@ -2,8 +2,6 @@ package server
 
 import (
 	"bufio"
-	"crypto/sha1"
-	"encoding/base64"
 	"fmt"
 	"html/template"
 	"net"
@@ -33,38 +31,11 @@ func HandleHomePage(w http.ResponseWriter, r *http.Request) {
 }
 
 func HandleWebsocketConn(w http.ResponseWriter, r *http.Request) {
-	cHeaders, err := InitClientHeaders(r)
-	if err != nil {
-		//TODO: send a bad response
-	}
-	// fmt.Println(cHeaders.Headers)
-	acceptVal := cHeaders.Headers["Sec-WebSocket-Key"]
-	acceptVal += "258EAFA5-E914-47DA-95CA-C5AB0DC85B11"
-	hasher := sha1.New()
-	hasher.Write([]byte(acceptVal))
-	sha := base64.URLEncoding.EncodeToString(hasher.Sum(nil))
-
-	// tcpConn := r.Context().Value(http.LocalAddrContextKey).(*net.TCPAddr)
-	conn, _, err := http.NewResponseController(w).Hijack()
+	conn, err := UpgradeConn(w, r)
 	if err != nil {
 		fmt.Println(err)
 	}
-
-	fmt.Println(conn.RemoteAddr().String())
-	// conn.Write([]byte("HTTP/1.1 101 Switching Protocols\r\n"))
-	// go handleConn(conn)
-
-	header := "HTTP/1.1 101 Switching Protocols\r\nUpgrade: websocket\r\nConnection: Upgrade\r\nSec-WebSocket-Accept: " + sha + "\r\n\r\n"
-
-	_, err1 := conn.Write([]byte(header))
-	if err1 != nil {
-		fmt.Println(err1)
-	} // w.Header().Set("Upgrade", "websocket")
-	// w.Header().Set("Connection", "Upgrade")
-	// w.Header().Set("Sec-WebSocket-Accept", sha)
-	// w.WriteHeader(http.StatusSwitchingProtocols)
-
-	go handleConn(conn)
+	go conn.ReadMsg()
 }
 
 func HandleTest(w http.ResponseWriter, r *http.Request) {

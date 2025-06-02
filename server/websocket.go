@@ -157,6 +157,11 @@ func UpgradeConn(b *Broadcaster, w http.ResponseWriter, r *http.Request) (*Webso
 	return wConn, nil
 }
 
+type Msg struct {
+	WConn *WebsocketConn
+	Data  []byte
+}
+
 func (wConn *WebsocketConn) ReadMsg() {
 	defer func() {
 		err := wConn.tcpConn.Close()
@@ -182,7 +187,7 @@ func (wConn *WebsocketConn) ReadMsg() {
 			break
 		}
 		decodedData := dataFrame.UnmaskData()
-		wConn.broadcaster.Broadcast <- decodedData
+		wConn.broadcaster.Broadcast <- &Msg{WConn: wConn, Data: decodedData}
 	}
 }
 

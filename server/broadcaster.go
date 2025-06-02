@@ -8,7 +8,7 @@ type Broadcaster struct {
 	Clients map[*WebsocketConn]bool
 
 	// the Broadcast channel that'll receive messages
-	Broadcast chan []byte
+	Broadcast chan *Msg
 
 	Add    chan *WebsocketConn
 	Remove chan *WebsocketConn
@@ -17,7 +17,7 @@ type Broadcaster struct {
 func NewBroadcaster() *Broadcaster {
 	return &Broadcaster{
 		Clients:   make(map[*WebsocketConn]bool),
-		Broadcast: make(chan []byte),
+		Broadcast: make(chan *Msg),
 		Add:       make(chan *WebsocketConn),
 		Remove:    make(chan *WebsocketConn),
 	}
@@ -27,9 +27,11 @@ func (b *Broadcaster) Run() {
 	for {
 		select {
 		case msg := <-b.Broadcast:
-			fmt.Println(string(msg))
+			fmt.Println(string(msg.Data))
 			for client := range b.Clients {
-				client.sendMsg(msg)
+				if client != msg.WConn {
+					client.sendMsg(msg.Data)
+				}
 			}
 			fmt.Println("incoming message sent to ", len(b.Clients))
 		case newConn := <-b.Add:

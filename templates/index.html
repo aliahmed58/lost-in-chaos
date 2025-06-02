@@ -53,7 +53,11 @@
 
             if (socket.readyState == socket.OPEN) {
                 let msgVal = document.getElementById('editor').value
-                socket.send(msgVal)
+                let jsonObj = {
+                    real: true, 
+                    msg: msgVal
+                }
+                socket.send(JSON.stringify(jsonObj))
             }
         }
         function disconnect() {

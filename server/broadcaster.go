@@ -27,8 +27,9 @@ func (b *Broadcaster) Run() {
 	for {
 		select {
 		case msg := <-b.Broadcast:
-			for conn := range b.Clients {
-				conn.sendMsg(string(msg))
+			fmt.Println(string(msg))
+			for client := range b.Clients {
+				client.sendMsg(msg)
 			}
 			fmt.Println("incoming message sent to ", len(b.Clients))
 		case newConn := <-b.Add:

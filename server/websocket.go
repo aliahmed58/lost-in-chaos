@@ -186,7 +186,7 @@ func (wConn *WebsocketConn) ReadMsg() {
 	}
 }
 
-func (wConn *WebsocketConn) sendMsg(message string) {
+func (wConn *WebsocketConn) sendMsg(message []byte) {
 	header := []byte{0x81}
 	payload := []byte(message)
 	length := len(payload)

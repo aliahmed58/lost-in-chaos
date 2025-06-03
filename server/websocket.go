@@ -5,11 +5,13 @@ import (
 	"crypto/sha1"
 	"encoding/base64"
 	"encoding/binary"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
 	"net"
 	"net/http"
+	"rtdocs/entities"
 )
 
 const (
@@ -123,9 +125,12 @@ func (df DataFrame) UnmaskData() []byte {
 type WebsocketConn struct {
 	tcpConn     net.Conn
 	broadcaster *Broadcaster
+	uuid        string
 }
 
 func UpgradeConn(b *Broadcaster, w http.ResponseWriter, r *http.Request) (*WebsocketConn, error) {
+
+	uuid := r.URL.Query().Get("uuid")
 
 	headers, err := getClientHeaders(r)
 	if err != nil {
@@ -151,15 +156,10 @@ func UpgradeConn(b *Broadcaster, w http.ResponseWriter, r *http.Request) (*Webso
 		return nil, err
 	}
 
-	wConn := &WebsocketConn{tcpConn: conn, broadcaster: b}
+	wConn := &WebsocketConn{tcpConn: conn, broadcaster: b, uuid: uuid}
 	b.Add <- wConn
 
 	return wConn, nil
-}
-
-type Msg struct {
-	WConn *WebsocketConn
-	Data  []byte
 }
 
 func (wConn *WebsocketConn) ReadMsg() {
@@ -187,7 +187,13 @@ func (wConn *WebsocketConn) ReadMsg() {
 			break
 		}
 		decodedData := dataFrame.UnmaskData()
-		wConn.broadcaster.Broadcast <- &Msg{WConn: wConn, Data: decodedData}
+		var payload entities.Payload
+		err = json.Unmarshal(decodedData, &payload)
+		if err != nil {
+			fmt.Println(err)
+			return
+		}
+		wConn.broadcaster.Broadcast <- &payload
 	}
 }
 

@@ -29,14 +29,14 @@
 
     <!-- canvas scripting // testing things out -->
     <script>
-        let vals = {x: 0, y: 0}
-        let other = {x: 0, y: 0}
+        let curr = {x: 0, y: 0, uuid: null}
+        let playerMap = {}
         let ctx = null
         const draw = () => {
             const canvas = document.getElementById("main-canvas")
             if (canvas.getContext) {
                 ctx = canvas.getContext("2d")
-                ctx.fillRect(vals.x, vals.y, 20, 20)
+                ctx.fillRect(curr.x, curr.y, 20, 20)
             }
         }
 
@@ -44,16 +44,16 @@
         window.addEventListener('keypress', e => {
             if (ctx) {
                 if (e.key === "a") {
-                    vals.x -= 2
+                    curr.x -= 2
                 }
                 if (e.key === "d") {
-                    vals.x += 2
+                    curr.x += 2
                 }
                 if (e.key === "w") {
-                    vals.y -= 2
+                    curr.y -= 2
                 }
                 if (e.key === "s") {
-                    vals.y += 2
+                    curr.y += 2
                 }
                 drawFrames()
                 sendMsg()
@@ -63,18 +63,26 @@
             if (ctx) {
                 ctx.clearRect(0, 0, 150, 150)
                 ctx.fillStyle = "orange"
-                ctx.fillRect(other.x, other.y, 20, 20)
+                for (const uuid in playerMap) {
+                    const {x, y} = playerMap[uuid]
+                    ctx.fillRect(x, y, 20, 20)
+                }
                 ctx.fillStyle = "black"
-                ctx.fillRect(vals.x, vals.y, 20, 20)
+                ctx.fillRect(curr.x, curr.y, 20, 20)
             }
         }
         let socket = null
 
         function connect() {
+            if (socket) {
+                return
+            }
+            curr["uuid"] = crypto.randomUUID()
             socket = new WebSocket(
-                "ws://192.168.18.196/websocket")
+                `ws://192.168.18.196/websocket?uuid=${curr["uuid"]}`)
 
             socket.onopen = function () {
+                console.log(socket)
                 console.log("Connected to WebSocket server.");
                 document.getElementById("editor").value = 'connected'
             };
@@ -82,6 +90,8 @@
             socket.onmessage = function (event) {
                 console.log(event.data)
                 other = JSON.parse(event.data)
+                playerMap[other.uuid] = {x: other.x, y: other.y}
+                console.log(playerMap)
                 drawFrames()
                 document.getElementById("editor").value = event.data
             };
@@ -100,11 +110,7 @@
 
             if (socket.readyState == socket.OPEN) {
                 let msgVal = document.getElementById('editor').value
-                let jsonObj = {
-                    real: true, 
-                    msg: msgVal
-                }
-                socket.send(JSON.stringify(vals))
+                socket.send(JSON.stringify(curr))
             }
         }
         function disconnect() {

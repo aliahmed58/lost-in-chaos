@@ -1,6 +1,10 @@
 package server
 
-import "fmt"
+import (
+	"encoding/json"
+	"fmt"
+	"rtdocs/entities"
+)
 
 // util to broadcast functions to different go connections
 type Broadcaster struct {
@@ -8,7 +12,7 @@ type Broadcaster struct {
 	Clients map[*WebsocketConn]bool
 
 	// the Broadcast channel that'll receive messages
-	Broadcast chan *Msg
+	Broadcast chan *entities.Payload
 
 	Add    chan *WebsocketConn
 	Remove chan *WebsocketConn
@@ -17,7 +21,7 @@ type Broadcaster struct {
 func NewBroadcaster() *Broadcaster {
 	return &Broadcaster{
 		Clients:   make(map[*WebsocketConn]bool),
-		Broadcast: make(chan *Msg),
+		Broadcast: make(chan *entities.Payload),
 		Add:       make(chan *WebsocketConn),
 		Remove:    make(chan *WebsocketConn),
 	}
@@ -27,16 +31,21 @@ func (b *Broadcaster) Run() {
 	for {
 		select {
 		case msg := <-b.Broadcast:
-			fmt.Println(string(msg.Data))
+			fmt.Println(msg.X, msg.Y, msg.Uuid)
+			jsonPayload, err := json.Marshal(msg)
+			if err != nil {
+				fmt.Println(err)
+				return
+			}
 			for client := range b.Clients {
-				if client != msg.WConn {
-					client.sendMsg(msg.Data)
+				if client.uuid != msg.Uuid {
+					client.sendMsg(jsonPayload)
 				}
 			}
-			fmt.Println("incoming message sent to ", len(b.Clients))
+			fmt.Println("incoming message sent to ", len(b.Clients)-1)
 		case newConn := <-b.Add:
 			b.Clients[newConn] = true
-			fmt.Println(newConn.tcpConn.RemoteAddr().String() + " connected.")
+			fmt.Println(newConn.tcpConn.RemoteAddr().String() + " with uuid: " + newConn.uuid + " connected.")
 		case removeConn := <-b.Remove:
 			if _, alive := b.Clients[removeConn]; alive {
 				delete(b.Clients, removeConn)

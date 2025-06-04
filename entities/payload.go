@@ -1,7 +1,7 @@
 package entities
 
 type Payload struct {
-	X    int    `json:"x"`
-	Y    int    `json:"y"`
-	Uuid string `json:"uuid"`
+	X    float64 `json:"x"`
+	Y    float64 `json:"y"`
+	Uuid string  `json:"uuid"`
 }

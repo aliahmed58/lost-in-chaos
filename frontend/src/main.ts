@@ -8,17 +8,10 @@ const engine = new GameEngine();
 	// Initialize the application
 	await engine.init({ background: "#1099bb", resizeTo: window });
 
-	// Load the bunny texture
-	const texture = await Assets.load("/assets/bunny.png");
-
-	const player = new Player(texture);
-	player.anchor.set(0.5);
-	player.position.set(engine.screen.width / 2, engine.screen.height / 2);
-	player.addListeners()
-	engine.addPlayer(player)
+	engine.connectToServer()
 
 	// Listen for animate update
 	engine.ticker.add((time) => {
-		player.move(time.deltaTime)
+		engine.update(time.deltaTime)
 	});
 })();

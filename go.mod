@@ -1,4 +1,4 @@
-module rtdocs
+module lostinchaos 
 
 go 1.23.1
 

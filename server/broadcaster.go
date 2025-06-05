@@ -3,7 +3,7 @@ package server
 import (
 	"encoding/json"
 	"fmt"
-	"rtdocs/entities"
+	"lostinchaos/entities"
 )
 
 // util to broadcast functions to different go connections

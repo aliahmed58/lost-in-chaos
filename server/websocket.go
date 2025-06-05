@@ -9,9 +9,9 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"lostinchaos/entities"
 	"net"
 	"net/http"
-	"rtdocs/entities"
 )
 
 const (

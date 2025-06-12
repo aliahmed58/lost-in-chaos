@@ -1,6 +1,4 @@
-import { Application, Assets, Sprite } from "pixi.js";
 import { GameEngine } from "./engine/engine";
-import { Player } from "./entities/Player";
 
 const engine = new GameEngine();
 (async () => {
@@ -8,9 +6,11 @@ const engine = new GameEngine();
 	// Initialize the application
 	await engine.init({ background: "#1099bb", resizeTo: window });
 
-	engine.connectToServer()
-
+	console.log(engine.players.values())
 	// Listen for animate update
+	if (engine.socket.readyState === engine.socket.OPEN) {
+		engine.socket.send(JSON.stringify({type: "player_join"}))
+	}
 	engine.ticker.add((time) => {
 		engine.update(time.deltaTime)
 	});

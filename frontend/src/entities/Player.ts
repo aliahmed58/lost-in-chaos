@@ -5,6 +5,11 @@ const
     ACCELERATION = 1,
     FRICTION = 0.8;
 
+type PlayerJSON = {
+    x: number,
+    y: number,
+};
+
 export class Player extends Sprite {
 
     private _vx: number = 0;
@@ -59,5 +64,16 @@ export class Player extends Sprite {
 
     public get uuid(): string {
         return this._uuid;
+    }
+
+    public set uuid(newUuid: string) {
+        this._uuid = newUuid
+    }
+
+    public toJSON(): PlayerJSON {
+        return {
+            x: this.x,
+            y: this.y,
+        }
     }
 }
